@@ -30,8 +30,8 @@ def read_root():
 @app.post('/users', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 def create_user(user: UserSchema):
     user_with_id = UserDB(**user.model_dump(), id=len(database) + 1)
-    # Aqui precisamos criar um novo modelo que represente o banco
-    # Precisamos de um identificador para esse registro!
+    # Here we need to create a new model that represents the database
+    # We need an identifier for this record!
 
     database.append(user_with_id)
 
@@ -46,7 +46,10 @@ def read_users():
 @app.put('/users/{user_id}', response_model=UserPublic)
 def update_user(user_id: int, user: UserSchema):
     if user_id > len(database) or user_id < 1:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='User not found')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='User not found',
+        )
 
     user_with_id = UserDB(**user.model_dump(), id=user_id)
     database[user_id - 1] = user_with_id
@@ -57,8 +60,23 @@ def update_user(user_id: int, user: UserSchema):
 @app.delete('/users/{user_id}', response_model=Message)
 def delete_user(user_id: int):
     if user_id > len(database) or user_id < 1:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='User not found')
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='User not found',
+        )
 
     database.pop(user_id - 1)
 
     return {'message': 'User deleted successfully'}
+
+
+# Exercício
+@app.get('/users/{user_id}', response_model=UserPublic)
+def read_user_exercicio(user_id: int):
+    if user_id > len(database) or user_id < 1:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='User not found',
+        )
+
+    return database[user_id - 1]
