@@ -25,7 +25,8 @@ dev = [
     "pytest-cov (>=7.1.0,<8.0.0)",
     "taskipy (>=1.14.1,<2.0.0)",
     "ruff (>=0.15.8,<0.16.0)",
-    "typos (>=1.44.0,<2.0.0)"
+    "typos (>=1.44.0,<2.0.0)",
+    "pytest-randomly (>=4.1.0,<5.0.0)"
 ]
 
 
@@ -48,9 +49,9 @@ quote-style = 'single'
 extend-exclude = ["htmlcov"]
 
 
-[tool.pytest.ini_options]
-pythonpath = "."
-addopts = '-p no:warnings'
+[tool.pytest]
+pythonpath = ['.']
+addopts = ['-p', 'no:warnings', '--cov=fast_zero', '--cov-context=test', '--cov-branch']
 
 
 [tool.taskipy.tasks]
