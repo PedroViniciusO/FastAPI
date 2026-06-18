@@ -68,31 +68,34 @@ def test_read_users_with_users(client, user):
     assert response.json() == {'users': [user_schema]}
 
 
-def test_update_user(client, user):
+def test_update_user(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'bob',
             'email': 'bob@example.com',
-            'password': 'novasenha'
-        }
+            'password': 'novasenha',
+        },
     )
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'username': 'bob',
         'email': 'bob@example.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_delete_user(client, user):
-    response = client.delete('/users/1')
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted successfully'}
 
 
-def test_update_integrity_error(client, user):
+def test_update_integrity_error(client, user, token):
     # Criando um registro para "fausto"
     client.post(
         '/users',
@@ -106,6 +109,7 @@ def test_update_integrity_error(client, user):
     # Alterando o user.username das fixture para fausto
     response_update = client.put(
         f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'fausto',
             'email': 'bob@example.com',
@@ -118,42 +122,84 @@ def test_update_integrity_error(client, user):
         'detail': 'Username or Email already exists'
     }
 
+
+def test_create_user_should_return_409_username_exists_exercicio(client, user):
+    response = client.post(
+        '/users',
+        json={
+            'username': user.username,
+            'email': 'alice@example.com',
+            'password': 'secret',
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username already exists'}
+
+
+def test_create_user_should_return_409_email_exists__exercicio(client, user):
+    response = client.post(
+        '/users/',
+        json={
+            'username': 'alice',
+            'email': user.email,
+            'password': 'secret',
+        },
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Email already exists'}
+
+
 # # Exercício
 
-# def test_update_user_should_not_found_exercicio(client):
-#     response = client.put(
-#         '/users/999',
-#         json={
-#             'username': 'alice',
-#             'email': 'alice@example.com',
-#             'password': 'secret',
-#         }
-#     )
-#     assert response.status_code == HTTPStatus.NOT_FOUND
-#     assert response.json() == {'detail': 'User not found'}
+
+def test_update_user_should_return_not_found__exercicio(client, token):
+    response = client.put(
+        '/users/666',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'username': 'bob',
+            'email': 'bob@example.com',
+            'password': 'mynewpassword',
+        },
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
 
 
-# def test_delete_user_should_not_found_exercicio(client):
-#     response = client.delete('/users/999')
+def test_delete_user_should_return_not_found__exercicio(client, token):
+    response = client.delete(
+        '/users/666', headers={'Authorization': f'Bearer {token}'}
+    )
 
-#     assert response.status_code == HTTPStatus.NOT_FOUND
-#     assert response.json() == {'detail': 'User not found'}
-
-
-# def test_get_user_should_not_found_exercicio(client):
-#     response = client.get('/users/999')
-
-#     assert response.status_code == HTTPStatus.NOT_FOUND
-#     assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
 
 
-# # def test_get_user_exercicio(client):
-# #     response = client.get('/users/1')
+def test_get_user_should_return_not_found__exercicio(client):
+    response = client.get('/users/666')
 
-# #     assert response.status_code == HTTPStatus.OK
-# #     assert response.json() == {
-# #     'username': 'alice',
-# #     'email': 'alice@example.com',
-# #     'password': 'secret',
-# #     'id': 1,
-# #     }
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
+
+
+def test_get_user___exercicio(client, user):
+    response = client.get(f'/users/{user.id}')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'username': user.username,
+        'email': user.email,
+        'id': user.id,
+    }
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert 'token_type' in token
