@@ -116,7 +116,7 @@ def test_create_user_should_return_409_email_exists__exercicio(client, user):
 # # Exercício
 
 
-def test_update_user_should_return_not_found__exercicio(client, token):
+def test_update_user_should_return_forbidden__exercicio(client, token):
     response = client.put(
         '/users/666',
         headers={'Authorization': f'Bearer {token}'},
@@ -126,8 +126,8 @@ def test_update_user_should_return_not_found__exercicio(client, token):
             'password': 'mynewpassword',
         },
     )
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
 
 
 def test_delete_user_should_return_not_found__exercicio(client, token):
@@ -135,13 +135,14 @@ def test_delete_user_should_return_not_found__exercicio(client, token):
         '/users/666', headers={'Authorization': f'Bearer {token}'}
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {'detail': 'Not enough permissions'}
 
 
-def test_get_user_should_return_not_found__exercicio(client):
-    response = client.get('/users/666')
-
+def test_get_user_should_return_not_found__exercicio(client, token):
+    response = client.get(
+        '/users/666', headers={'Authorization': f'Bearer {token}'}
+    )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'User not found'}
 
